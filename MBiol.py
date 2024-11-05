@@ -5,7 +5,7 @@ Description: The code controlling the mainloop of the electronics in my masters 
 """
 
 import tkinter as tk
-from random import choices
+import random
 
 class TunnelElectronics:
     """Main class with control over the tunnel electronics
@@ -39,7 +39,24 @@ class TunnelDisplay(tk.Canvas):
         self.right_rect = self.create_rectangle(self.width/2, 0, self.width, self.height, fill="#00ffff", outline="#00ffff")
 
         
+def generate_trial_list() -> list:
+    """Generates a list of trials with the same number of each trial but displayed in a random order.
+    This allows for balanced randomness where each trial is random but equal numbers of each trial occur
 
+    Returns:
+        list: Ordered list of trials to be run
+    """
+    global TRIAL_SET_N
+    global EXPERIMENTAL_TRIALS
+
+    trial_names = EXPERIMENTAL_TRIALS.keys()
+
+    trials_list = list(trial_names) * TRIAL_SET_N
+    random.shuffle(trials_list)
+
+    print(trials_list.count(1))
+
+    return trials_list
         
 
 def exit_mainloop():
@@ -52,8 +69,6 @@ def exit_mainloop():
     running = False
 
     return
-
-DEBUG = False
 
 # List of the experimental trial setups
 EXPERIMENTAL_TRIALS = {
@@ -101,9 +116,20 @@ EXPERIMENTAL_TRIALS = {
     },
 }
 
+
+# Allows for a debug mode during testing
+DEBUG:bool = False
+
+# Number of each trial that should be run as part of each balanced random set
+TRIAL_SET_N:int = 100
+
 # Mainloop of the electronics
 if __name__ == "__main__":
     print("MBiol Electronics Running. Press ESC to exit")
+
+    if DEBUG:
+        random.seed = 0
+
     # Setups the display screen
     root = tk.Tk()
     root.attributes("-fullscreen", True)
@@ -116,14 +142,19 @@ if __name__ == "__main__":
     td = TunnelDisplay(width, height, root, bg = "white", borderwidth=0, highlightthickness=0)
     td.pack(fill = "both", expand=True)
 
-    # Controls the program mainloops
-    running = True
+    # Loop variables
+    running = True # Controls when to exit the mainloop
+    trials = [] # List of trials to run
 
     # Allows the application to be exited on <Escape> key press
     root.bind("<Escape>", lambda e: exit_mainloop())
 
     # Mainloop
     while running:
+        # If the list of trials is empty, generate a new one
+        if not trials:
+            trials = generate_trial_list()
+
         # Updates the window, this is instead of me calling root.mainloop as that would freeze the other code
         root.update()
     
