@@ -54,8 +54,6 @@ def generate_trial_list() -> list:
     trials_list = list(trial_names) * TRIAL_SET_N
     random.shuffle(trials_list)
 
-    print(trials_list.count(1))
-
     return trials_list
         
 
@@ -70,8 +68,11 @@ def exit_mainloop():
 
     return
 
+def next_trial():
+    return
+
 # List of the experimental trial setups
-EXPERIMENTAL_TRIALS = {
+EXPERIMENTAL_TRIALS:dict = {
     # Experiment Set 1 (see method notes)
     1: {
         "left_rect": "bright",
@@ -118,17 +119,18 @@ EXPERIMENTAL_TRIALS = {
 
 
 # Allows for a debug mode during testing
-DEBUG:bool = False
+# Boolean or a string flags containing specifics of what is required
+# Options:  True- will use a set seed and allow skipping of trials using the enter key; this is true with all debug options
+#           "slowEscape"- will not exit the consol when the window is closed until the enter key is pressed
+DEBUG = True
 
 # Number of each trial that should be run as part of each balanced random set
+# This will be multiplies by the number of experimental trials
 TRIAL_SET_N:int = 100
 
 # Mainloop of the electronics
 if __name__ == "__main__":
     print("MBiol Electronics Running. Press ESC to exit")
-
-    if DEBUG:
-        random.seed = 0
 
     # Setups the display screen
     root = tk.Tk()
@@ -149,6 +151,10 @@ if __name__ == "__main__":
     # Allows the application to be exited on <Escape> key press
     root.bind("<Escape>", lambda e: exit_mainloop())
 
+    if DEBUG:
+        random.seed = 0
+        root.bind("<Enter>", lambda e: next_trial())
+
     # Mainloop
     while running:
         # If the list of trials is empty, generate a new one
@@ -161,6 +167,9 @@ if __name__ == "__main__":
     # Exists the screen
     root.destroy()
     
-    # If I need to see the consol output I can set debug to true to view it after exit
-    if DEBUG:
-        input("Debug mode on: leaving consol open until enter key pressed")
+    # If I need to see the consol output I can set debug to "slow exit" to view it after exit
+    try:
+        if "slowexit" in DEBUG.lower():
+            input("Debug mode on: leaving consol open until enter key pressed")
+    except AttributeError:
+        pass
