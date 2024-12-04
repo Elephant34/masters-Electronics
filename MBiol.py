@@ -35,8 +35,8 @@ class TunnelDisplay(tk.Canvas):
 
         # Makes the rectangles which will be configured to white or black depending on the trial
         # Default colours are just for testing
-        self.left_rect = self.create_rectangle(0, 0, self.width/2, self.height, fill="#ff00ff", outline="#ff00ff")
-        self.right_rect = self.create_rectangle(self.width/2, 0, self.width, self.height, fill="#00ffff", outline="#00ffff")
+        self.left_rect = self.create_rectangle(0, 0, self.width/2, self.height, fill="#ffffff", outline="#ffffff")
+        self.right_rect = self.create_rectangle(self.width/2, 0, self.width, self.height, fill="#000000", outline="#000000")
 
         
 def generate_trial_list() -> list:
