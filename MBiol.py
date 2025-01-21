@@ -4,8 +4,15 @@ Author: Ambrose Hlustik-Smith
 Description: The code controlling the mainloop of the electronics in my masters project
 """
 
+# Load librarys
 import tkinter as tk
 import random
+from dotenv import dotenv_values
+# Attempts to import GPIO but for laptop testing imports Mock.GPIO instead
+try:
+    import RPi.GPIO as GPIO
+except:
+    import Mock.GPIO as GPIO
 
 class TunnelElectronics:
     """Main class with control over the tunnel electronics
@@ -71,6 +78,8 @@ def exit_mainloop():
 def next_trial():
     return
 
+config = dotenv_values(".env")
+
 # List of the experimental trial setups
 EXPERIMENTAL_TRIALS:dict = {
     # Experiment Set 1 (see method notes)
@@ -122,17 +131,25 @@ EXPERIMENTAL_TRIALS:dict = {
 # Boolean or a string flags containing specifics of what is required
 # Options:  True- will use a set seed and allow skipping of trials using the enter key; this is true with all debug options
 #           "slowEscape"- will not exit the consol when the window is closed until the enter key is pressed
-DEBUG = True
+DEBUG = config["DEBUG"]
 
 # Number of each trial that should be run as part of each balanced random set
 # This will be multiplies by the number of experimental trials
 TRIAL_SET_N:int = 100
 
+# Loop variables
+running = True # Controls when to exit the mainloop
+trials = [] # List of trials to run
+
 # Mainloop of the electronics
 if __name__ == "__main__":
+
     print("MBiol Electronics Running. Press ESC to exit")
 
-    # Setups the display screen
+    # Display Setup
+    # =============
+
+    # Setups the root
     root = tk.Tk()
     root.attributes("-fullscreen", True)
 
@@ -144,17 +161,18 @@ if __name__ == "__main__":
     td = TunnelDisplay(width, height, root, bg = "white", borderwidth=0, highlightthickness=0)
     td.pack(fill = "both", expand=True)
 
-    # Loop variables
-    running = True # Controls when to exit the mainloop
-    trials = [] # List of trials to run
+    # Key Binds
+    # =========
 
-    # Allows the application to be exited on <Escape> key press
+    # Allows Esc key to exit the program
     root.bind("<Escape>", lambda e: exit_mainloop())
+    # Allows rotation of trials during debugging
+    if DEBUG: root.bind("<Enter>", lambda e: next_trial())
 
+    # For debugging purposes set the random seed
     if DEBUG:
         random.seed = 0
-        root.bind("<Enter>", lambda e: next_trial())
-
+        
     # Mainloop
     while running:
         # If the list of trials is empty, generate a new one
