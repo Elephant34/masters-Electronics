@@ -5,6 +5,7 @@ Description: The code controlling the mainloop of the electronics in my masters 
 """
 # Generic libraries
 # =================
+import random
 from pathlib import Path
 from time import strftime, localtime
 
@@ -12,6 +13,7 @@ from time import strftime, localtime
 # ===========================
 from dotenv import dotenv_values
 config = dotenv_values(".env")
+assert len(config) >= 5, ".env file does not have correct arguments" # Quick check that a .env file has been added
 
 # Logging setup
 # =============
@@ -60,58 +62,18 @@ class masters_Electronics:
     """Main class with control over the tunnel electronics
     """
 
-    # List of the experimental trial setups
-    EXPERIMENTAL_TRIALS:dict = {
-        # Experiment Set 1 (see method notes)
-        1: {
-            "left_rect": "light",
-            "right_rect": "dark",
-            "obstacle": "WW"
-        },
-        2: {
-            "left_rect": "dark",
-            "right_rect": "light",
-            "obstacle": "WW"
-        },
-        3: {
-            "left_rect": "bright",
-            "right_rect": "light",
-            "obstacle": "BB"
-        },
-        4: {
-            "left_rect": "dark",
-            "right_rect": "light",
-            "obstacle": "BB"
-        },
-        # Experiment Set 2 (see method notes)
-        5: {
-            "left_rect": "light",
-            "right_rect": "light",
-            "obstacle": "WB"
-        },
-        6: {
-            "left_rect": "light",
-            "right_rect": "light",
-            "obstacle": "BW"
-        },
-        7: {
-            "left_rect": "dark",
-            "right_rect": "dark",
-            "obstacle": "WB"
-        },
-        8: {
-            "left_rect": "dark",
-            "right_rect": "dark",
-            "obstacle": "BW"
-        },
-    }
-
     def __init__(self, config):
         """Calls the setup for all necessary objects
         """
 
         self.config = config
-        self.running = False
+        self.running = False # Program starts not running
+        self.paused = False # Program starts not paused
+
+        if "setseed" in self.config["DEBUG"].lower(): random.seed(0) # Debugging with reproducability
+
+        # Experiment variables
+        self.set_experiment_variables()
 
         # Screen setup
         self.display = DisplayScreen()
@@ -126,6 +88,76 @@ class masters_Electronics:
         self.setup_keybinds()
 
         return
+
+    def set_experiment_variables(self):
+        """Loads the variables used to control the experiment
+        """
+        # List of the experimental trial setups
+        self.EXPERIMENTAL_TRIALS:dict = {
+            # Experiment Set 1 (see method notes)
+            1: {
+                "left_rect": "light",
+                "right_rect": "dark",
+                "left_obstacle": "light",
+                "right_obstacle": "dark"
+            },
+            2: {
+                "left_rect": "dark",
+                "right_rect": "light",
+                "obstacle": "WW"
+            },
+            3: {
+                "left_rect": "bright",
+                "right_rect": "light",
+                "obstacle": "BB"
+            },
+            4: {
+                "left_rect": "dark",
+                "right_rect": "light",
+                "obstacle": "BB"
+            },
+            # Experiment Set 2 (see method notes)
+            5: {
+                "left_rect": "light",
+                "right_rect": "light",
+                "obstacle": "WB"
+            },
+            6: {
+                "left_rect": "dark",
+                "right_rect": "dark",
+                "obstacle": "WB"
+            },
+            7: {
+                "left_rect": "light",
+                "right_rect": "light",
+                "obstacle": "BW"
+            },
+            8: {
+                "left_rect": "dark",
+                "right_rect": "dark",
+                "obstacle": "BW"
+            },
+        }
+
+        # Change these so this just stores the trial dict itself, make the trials contain more information
+        self.obstacle_state = "WW"
+        self.trial_state = self.generate_trial_state()
+
+        
+    
+    def generate_trial_state(self) -> int:
+        """Generates a random valid trial based on the obstalce state
+
+        Returns:
+            int: Returns an integer within the experimental_trials directory
+        """
+        valid_trials = []
+        for trial_no, trial_setup in self.EXPERIMENTAL_TRIALS.items():
+            if trial_setup["obstacle"].lower() == self.obstacle_state.lower():
+                valid_trials.append(trial_no)
+        
+        return random.choice(valid_trials)
+
 
     def setup_gpio(self):
         """Configures the gpio pins
@@ -144,14 +176,15 @@ class masters_Electronics:
 
         # Specific debug related keybinds
         if self.config["DEBUG"]:
-            # Binds <enter> to rotate experimental setups
-            self.display.bind("<Enter>", lambda e: self.next_trial())
+            # Binds <tab> to rotate experimental setups
+            self.display.bind("<Tab>", lambda e: self.next_trial())
 
     def mainloop(self):
         self.running = True
         while self.running:
-            # Keeps the display refreshing
-            self.display.update()
+            while not self.paused:
+                # Keeps the display refreshing
+                self.display.update()
         
         self.display.destroy()
 
@@ -160,6 +193,7 @@ class masters_Electronics:
     def next_trial(self):
         """Randomises the next trial and calls the functions to configure it
         """
+        logging.info("Changed trial")
         return
 
     def exit_mainloop(self):
@@ -173,8 +207,11 @@ class masters_Electronics:
 
 # Mainloop of the electronics
 if __name__ == "__main__":
+    logging.info("Program started")
     setup = masters_Electronics(config)
+    logging.info("Mainloop entered")
     setup.mainloop()
+    logging.info("Mainloop exited")
 
     if "slowexit" in config["DEBUG"].lower():
         input("Press <Enter> to Exit")
