@@ -278,6 +278,9 @@ if __name__ == "__main__":
     setup.mainloop()
     logging.info("Mainloop exited")
 
+    # Methods to ensure the experiment exits without failure
+    setup.data_writer.safe_exit()
+
     if "slowexit" in config["DEBUG"].lower():
         input("Press <Enter> to Exit")
 
