@@ -19,8 +19,8 @@ class DisplayScreen(tk.Tk):
         self.height = self.winfo_screenheight()
 
         # The main display splitting the screen into left and right rectangles
-        td = ExperimentCanvas(self.width, self.height, self, bg = "white", borderwidth=0, highlightthickness=0)
-        td.pack(fill = "both", expand=True)
+        self.canvas = ExperimentCanvas(self.width, self.height, self, bg = "white", borderwidth=0, highlightthickness=0)
+        self.canvas.pack(fill = "both", expand=True)
 
 class ExperimentCanvas(tk.Canvas):
     """The canvas controling the colour of the left vs right side of the screen
@@ -60,16 +60,19 @@ class ExperimentCanvas(tk.Canvas):
         self.itemconfig(self.right_rect, fill=right_hex, outline=right_hex)
     
     def match_colour(self, colour:str):
-        """Will match specific colour names to hex values
+        """Will match specific colour names to hex values.
+        This function allows arbirotry colour names in the experimental trials to make experiment clear
 
         Args:
             colour (str): A colour hex code or string description
         """
         match colour.lower():
-            case "dark":
+            case "dark"|"black":
                 colour = "#000000"
-            case "light":
+            case "light"|"white":
                 colour = "#ffffff"
+            case pause_colour if(pause_colour in ["orchid2", "cyan2"]): # Special case for pause colours
+                colour = colour
             case hex if(hex.startswith("#") and len(hex) == 7):
                 colour = colour
             case _:

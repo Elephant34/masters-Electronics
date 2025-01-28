@@ -68,7 +68,6 @@ class masters_Electronics:
 
         self.config = config
         self.running = False # Program starts not running
-        self.paused = False # Program starts not paused
 
         if "setseed" in self.config["DEBUG"].lower(): random.seed(0) # Debugging with reproducability
 
@@ -87,60 +86,69 @@ class masters_Electronics:
         # Keybinds setup
         self.setup_keybinds()
 
+        # Gets the experimenter to set the obstacle start position
+        self.change_obstacle()
+
         return
 
     def set_experiment_variables(self):
         """Loads the variables used to control the experiment
         """
         # List of the experimental trial setups
+        # Foreground and background use different terminology to avoid confusion
         self.EXPERIMENTAL_TRIALS:dict = {
             # Experiment Set 1 (see method notes)
             1: {
-                "left_rect": "light",
-                "right_rect": "dark",
-                "left_obstacle": "light",
-                "right_obstacle": "dark"
+                "left_bg": "light",
+                "right_bg": "dark",
+                "left_fg": "white",
+                "right_fg": "white"
             },
             2: {
-                "left_rect": "dark",
-                "right_rect": "light",
-                "obstacle": "WW"
+                "left_bg": "dark",
+                "right_bg": "light",
+                "left_fg": "white",
+                "right_fg": "white"
             },
             3: {
-                "left_rect": "bright",
-                "right_rect": "light",
-                "obstacle": "BB"
+                "left_bg": "light",
+                "right_bg": "dark",
+                "left_fg": "black",
+                "right_fg": "black"
             },
             4: {
-                "left_rect": "dark",
-                "right_rect": "light",
-                "obstacle": "BB"
+                "left_bg": "dark",
+                "right_bg": "light",
+                "left_fg": "black",
+                "right_fg": "black"
             },
             # Experiment Set 2 (see method notes)
             5: {
-                "left_rect": "light",
-                "right_rect": "light",
-                "obstacle": "WB"
+                "left_bg": "light",
+                "right_bg": "light",
+                "left_fg": "white",
+                "right_fg": "black"
             },
             6: {
-                "left_rect": "dark",
-                "right_rect": "dark",
-                "obstacle": "WB"
+                "left_bg": "dark",
+                "right_bg": "dark",
+                "left_fg": "white",
+                "right_fg": "black"
             },
             7: {
-                "left_rect": "light",
-                "right_rect": "light",
-                "obstacle": "BW"
+                "left_bg": "light",
+                "right_bg": "light",
+                "left_fg": "black",
+                "right_fg": "white"
             },
             8: {
-                "left_rect": "dark",
-                "right_rect": "dark",
-                "obstacle": "BW"
+                "left_bg": "dark",
+                "right_bg": "dark",
+                "left_fg": "black",
+                "right_fg": "white"
             },
         }
 
-        # Change these so this just stores the trial dict itself, make the trials contain more information
-        self.obstacle_state = "WW"
         self.trial_state = self.generate_trial_state()
 
         
@@ -151,12 +159,17 @@ class masters_Electronics:
         Returns:
             int: Returns an integer within the experimental_trials directory
         """
+        """
         valid_trials = []
         for trial_no, trial_setup in self.EXPERIMENTAL_TRIALS.items():
             if trial_setup["obstacle"].lower() == self.obstacle_state.lower():
                 valid_trials.append(trial_no)
         
         return random.choice(valid_trials)
+        """
+
+        # TODO: TEMPORATRY THING
+        return self.EXPERIMENTAL_TRIALS[1]
 
 
     def setup_gpio(self):
@@ -174,6 +187,12 @@ class masters_Electronics:
         # Binds Esc key to exit the program
         self.display.bind("<Escape>", lambda e: self.exit_mainloop())
 
+        # Binds Space key to pause
+        self.display.bind("<space>", lambda e: self.toggle_pause())
+
+        # Binds "c" to change the obstacle rotation
+        self.display.bind("c", lambda e: self.change_obstacle())
+
         # Specific debug related keybinds
         if self.config["DEBUG"]:
             # Binds <tab> to rotate experimental setups
@@ -182,9 +201,8 @@ class masters_Electronics:
     def mainloop(self):
         self.running = True
         while self.running:
-            while not self.paused:
-                # Keeps the display refreshing
-                self.display.update()
+            # Keeps the display refreshing
+            self.display.update()
         
         self.display.destroy()
 
@@ -193,13 +211,58 @@ class masters_Electronics:
     def next_trial(self):
         """Randomises the next trial and calls the functions to configure it
         """
-        logging.info("Changed trial")
+        self.trial_state = random.choice(list(self.EXPERIMENTAL_TRIALS.values()))
+        logging.info("Changed trial to: {}".format(self.trial_state))
+
+        self.set_main_rects()
+        return
+
+    def set_main_rects(self, left_rect=None, right_rect=None):
+        """Sets the colours of the rectangles. By default this will be to the current trial state
+        """
+        if not left_rect: left_rect = self.trial_state["left_bg"]
+        if not right_rect: right_rect = self.trial_state["right_bg"]
+
+        self.display.canvas.set_rect_colours(left_rect, right_rect)
+
         return
 
     def exit_mainloop(self):
         """Will cause the mainloop to exit safley ensuring all data is saved
         """
         self.running = False
+
+        return
+
+    def toggle_pause(self, pause_state:bool=None):
+        """Toggles pause state of experiment. When paused both screens will be pink and the obstacle roations can be changed.
+        Data will not be recorded when the experiment is paused.
+
+        Args:
+            pause_state (bool, optional): When provided the pause state will explicity change to this value. Defaults to None to toggle paused state
+        """
+        
+        if pause_state:
+            self.paused = pause_state
+        else:
+            self.paused = not self.paused
+        
+
+        if self.paused:
+            logging.info("Program paused")
+            self.set_main_rects("orchid2", "cyan2")
+        else:
+            self.set_main_rects()
+            logging.info("Program resumed")
+
+        return
+
+    def change_obstacle(self):
+        """Generates the next obstacle position and places it on screen for the experimenter to roate the obstical around
+        """
+        self.toggle_pause(True)
+
+        logging.info("Obstacle roated to {}")
 
         return
 
