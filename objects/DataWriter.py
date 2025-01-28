@@ -28,8 +28,10 @@ class DataWriter:
             file_name = strftime("%Y%m%d", localtime())
         )
 
-        # Checks the file exists and makes it if it does not
-        self.data_file.mkdir(parents=True, exist_ok=True)
+        data_file_exists = self.data_file.exists() # Checks if the file already exists
+
+        # Creates the parent file path if it does not exist
+        self.data_file.parent.mkdir(parents=True, exist_ok=True)
 
         # Opens the data file
         self.open_file = self.data_file.open("a", newline="")
@@ -39,7 +41,9 @@ class DataWriter:
             self.open_file,
             fieldnames=list(self.data_blank.keys())
         )
-        self.data_writer.writeheader()
+        # If the file did not already exist write the header
+        if not data_file_exists:
+            self.data_writer.writeheader()
 
         logging.info("Data writer open at file: {}".format(str(self.data_file.absolute())))
 
@@ -54,8 +58,11 @@ class DataWriter:
         data = self.data_blank
         data["gate_id"] = gate_id
         data["epoch_time"] = current_epoch()
+        data["trial_id"] = trial_id
 
         self.data_writer.writerow(data)
+
+        self.open_file.flush()
 
         logging.info("Gate crossed: {}".format(data))
     

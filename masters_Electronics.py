@@ -101,24 +101,28 @@ class masters_Electronics:
         self.EXPERIMENTAL_TRIALS:dict = {
             # Experiment Set 1 (see method notes)
             1: {
+                "trial_id": 1,
                 "left_bg": "light",
                 "right_bg": "dark",
                 "left_fg": "white",
                 "right_fg": "white"
             },
             2: {
+                "trial_id": 2,
                 "left_bg": "dark",
                 "right_bg": "light",
                 "left_fg": "white",
                 "right_fg": "white"
             },
             3: {
+                "trial_id": 3,
                 "left_bg": "light",
                 "right_bg": "dark",
                 "left_fg": "black",
                 "right_fg": "black"
             },
             4: {
+                "trial_id": 4,
                 "left_bg": "dark",
                 "right_bg": "light",
                 "left_fg": "black",
@@ -126,24 +130,28 @@ class masters_Electronics:
             },
             # Experiment Set 2 (see method notes)
             5: {
+                "trial_id": 5,
                 "left_bg": "light",
                 "right_bg": "light",
                 "left_fg": "white",
                 "right_fg": "black"
             },
             6: {
+                "trial_id": 6,
                 "left_bg": "dark",
                 "right_bg": "dark",
                 "left_fg": "white",
                 "right_fg": "black"
             },
             7: {
+                "trial_id": 7,
                 "left_bg": "light",
                 "right_bg": "light",
                 "left_fg": "black",
                 "right_fg": "white"
             },
             8: {
+                "trial_id": 8,
                 "left_bg": "dark",
                 "right_bg": "dark",
                 "left_fg": "black",
@@ -199,6 +207,11 @@ class masters_Electronics:
         if self.config["DEBUG"]:
             # Binds <tab> to rotate experimental setups
             self.display.bind("<Tab>", lambda e: self.next_trial())
+
+            # Binds 1,2,3 keys to mimic gate interaction
+            self.display.bind("1", lambda e: self.gate_crossed(e.char))
+            self.display.bind("2", lambda e: self.gate_crossed(e.char))
+            self.display.bind("3", lambda e: self.gate_crossed(e.char))
 
     def mainloop(self):
         self.running = True
@@ -267,6 +280,13 @@ class masters_Electronics:
         logging.info("Obstacle roated to {}")
 
         return
+
+    def gate_crossed(self, gate_id):
+        """Callback for when the entry gate is crossed to write data and change experimental trial if necessary
+        """
+
+        logging.info("Gate {} crossed".format(gate_id))
+        self.data_writer.record_gate_crossed(gate_id, self.trial_state["trial_id"])
 
 
 
