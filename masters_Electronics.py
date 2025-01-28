@@ -225,7 +225,12 @@ class masters_Electronics:
     
     def next_trial(self):
         """Randomises the next trial and calls the functions to configure it
+        Will only do so if the program is not paused
         """
+        if self.paused:
+            logging.warning("Attempt to switch trial inturrputed by experiment pause")
+            return
+        
         self.trial_state = random.choice(list(self.EXPERIMENTAL_TRIALS.values()))
         logging.info("Changed trial to: {}".format(self.trial_state))
 
@@ -285,8 +290,17 @@ class masters_Electronics:
         """Callback for when the entry gate is crossed to write data and change experimental trial if necessary
         """
 
-        logging.info("Gate {} crossed".format(gate_id))
-        self.data_writer.record_gate_crossed(gate_id, self.trial_state["trial_id"])
+        # Only write data when the program is not paused
+        if not self.paused:
+            self.data_writer.record_gate_crossed(gate_id, self.trial_state["trial_id"])
+        else:
+            # Adds a warning log if the gates are crossed while the program is paused and data is not written
+            logging.warning(
+                "Gate {gate_id} crossed in trial state {trial_id} while paused".format(
+                    gate_id = gate_id,
+                    trial_id = self.trial_state["trial_id"]
+                )
+                )
 
 
 
@@ -294,6 +308,7 @@ class masters_Electronics:
 if __name__ == "__main__":
     logging.info("Program started")
     setup = masters_Electronics(config)
+
     logging.info("Mainloop entered")
     setup.mainloop()
     logging.info("Mainloop exited")
