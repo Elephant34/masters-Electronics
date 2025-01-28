@@ -56,6 +56,7 @@ except:
 # Custom objects
 # ==============
 from objects.DisplayScreen import DisplayScreen
+from objects.DataWriter import DataWriter
 
 
 class masters_Electronics:
@@ -78,6 +79,7 @@ class masters_Electronics:
         self.display = DisplayScreen()
 
         # Data writer setup
+        self.data_writer = DataWriter(Path(self.config["data_path"]))
 
         # GPIO setup
         self.setup_gpio()
