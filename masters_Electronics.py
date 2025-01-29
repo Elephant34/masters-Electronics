@@ -200,7 +200,7 @@ class masters_Electronics:
         GPIO.add_event_detect(
             int(config["entrance_gate_pin"]),
             GPIO.FALLING,
-            callback=lambda x: self.gate_crossed("left"),
+            callback=lambda x: self.gate_crossed("entrance"),
             bouncetime=10
         )
         GPIO.add_event_detect(
