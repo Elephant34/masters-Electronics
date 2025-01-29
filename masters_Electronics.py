@@ -185,10 +185,36 @@ class masters_Electronics:
     def setup_gpio(self):
         """Configures the gpio pins
         """
+
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setup(
+            [config["right_gate_pin"], config["left_gate_pin"], config["entrance_gate_pin"]],
+            GPIO.IN,
+            pull_up_down=GPIO.PUD_UP
+        )
     
     def setup_gpio_callbacks(self):
         """Configures the callbacks to record events and change the experiment setup as needed
         """
+
+        GPIO.add_event_detect(
+            config["entrance_gate_pin"],
+            GPIO.FALLING,
+            callback=lambda x: self.gate_crossed("left"),
+            bouncetime=10
+        )
+        GPIO.add_event_detect(
+            config["left_gate_pin"],
+            GPIO.FALLING,
+            callback=lambda x: self.gate_crossed("left"),
+            bouncetime=10
+        )
+        GPIO.add_event_detect(
+            config["right_gate_pin"],
+            GPIO.FALLING,
+            callback=lambda x: self.gate_crossed("right"),
+            bouncetime=10
+        )
 
     def setup_keybinds(self):
         """Setups keybinds to interact with the program while it's fullscreen
@@ -209,17 +235,19 @@ class masters_Electronics:
             self.display.bind("<Tab>", lambda e: self.next_trial())
 
             # Binds 1,2,3 keys to mimic gate interaction
-            self.display.bind("1", lambda e: self.gate_crossed(e.char))
-            self.display.bind("2", lambda e: self.gate_crossed(e.char))
-            self.display.bind("3", lambda e: self.gate_crossed(e.char))
+            self.display.bind("1", lambda e: self.gate_crossed("enterance"))
+            self.display.bind("2", lambda e: self.gate_crossed("right"))
+            self.display.bind("3", lambda e: self.gate_crossed("left"))
 
     def mainloop(self):
         self.running = True
         while self.running:
             # Keeps the display refreshing
             self.display.update()
-        
+
+        # Methods to ensure the experiment exits without failure
         self.display.destroy()
+        setup.data_writer.safe_exit()
 
         return
     
@@ -313,9 +341,8 @@ if __name__ == "__main__":
     setup.mainloop()
     logging.info("Mainloop exited")
 
-    # Methods to ensure the experiment exits without failure
-    setup.data_writer.safe_exit()
-
     if "slowexit" in config["DEBUG"].lower():
         input("Press <Enter> to Exit")
+    
+    logging.info("Program exited successfully- goodbye!")
 

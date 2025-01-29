@@ -14,6 +14,8 @@ class DisplayScreen(tk.Tk):
         # Makes the display fullscreen
         self.attributes("-fullscreen", True)
 
+        self.title("masters_electronics")
+
         # Gets the width and height
         self.width = self.winfo_screenwidth()
         self.height = self.winfo_screenheight()
