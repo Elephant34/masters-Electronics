@@ -485,7 +485,7 @@ if __name__ == "__main__":
     wait(
         ANY([
             lambda: setup.change_obstacle_state is False,
-            lambda: setup.running is False
+            lambda: setup.running is False # Will ensure a clean exit even before setup completed
         ]),
         sleep_seconds=0.1,
         on_poll=lambda:setup.display.update()
