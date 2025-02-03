@@ -73,6 +73,9 @@ class masters_Electronics:
         self.running = None
         self.change_obstacle_state = False
 
+        self.entrance_gate_crossed = False
+        self.exit_gate_crossed = False
+
         if "setseed" in self.config["DEBUG"].lower(): random.seed(0) # Debugging with reproducability
 
         # Experiment variables
@@ -390,7 +393,18 @@ class masters_Electronics:
 
         # Only write data when the program is not paused
         if not self.paused:
+            if gate_id.lower() == "enterance":
+                self.entrance_gate_crossed = True
+            if gate_id.lower() in ["right", "left"]:
+                self.exit_gate_crossed = True
+
             self.data_writer.record_gate_crossed(gate_id, self.current_trial["trial_id"])
+
+            if self.entrance_gate_crossed and self.exit_gate_crossed:
+                self.entrance_gate_crossed = False
+                self.exit_gate_crossed = False
+
+                self.next_trial()
         else:
             # Adds a warning log if the gates are crossed while the program is paused and data is not written
             logging.warning(
