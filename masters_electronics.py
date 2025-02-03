@@ -228,7 +228,9 @@ class masters_Electronics:
                 
                 # Exits the program immedietly if the experimental trials is not formatted correctly
                 self.exit_mainloop()
+                return
         
+        # Checks that all the trials have valid obstacle states
         for trial in self.EXPERIMENTAL_TRIALS.values():
             if(not any(
                 valid_obstacle["left_fg"] == trial["left_fg"] and 
@@ -240,7 +242,9 @@ class masters_Electronics:
                         trial_id = trial["trial_id"]
                     )
                 )
+                # Exits the program immedietly if the experimental trials is not formatted correctly
                 self.exit_mainloop()
+                return
 
         return
         
@@ -445,8 +449,10 @@ class masters_Electronics:
             if gate_id.lower() in ["right", "left"]:
                 self.exit_gate_crossed = True
 
+            # Records the data to the CSV file
             self.data_writer.record_gate_crossed(gate_id, self.current_trial["trial_id"])
 
+            # Automatic trial rotation
             if self.entrance_gate_crossed and self.exit_gate_crossed:
                 self.reset_gate_crossings()
 
