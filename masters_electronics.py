@@ -50,7 +50,7 @@ logging.basicConfig(
 # ====
 # Attempts to import GPIO but for laptop testing imports Mock.GPIO instead
 try:
-    import RPi.GPIO as GPIO
+    import RPi.GPIO as GPIO # type: ignore
 except:
     import Mock.GPIO as GPIO
     logging.warning("Mock.GPIO used. This is probally due to testing but if not here is your problem!")
@@ -337,7 +337,7 @@ class masters_Electronics:
 
             self.exit_gate_crossed = False
             self.entrance_gate_crossed = False
-            
+
             self.display.canvas.toggle_obstacle_visibility()
             logging.info(
                 "Changed obstacle to {left}, {right}".format(
