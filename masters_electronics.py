@@ -264,14 +264,6 @@ class masters_Electronics:
             self.display.bind("1", lambda e: self.gate_crossed("entrance"))
             self.display.bind("2", lambda e: self.gate_crossed("right"))
             self.display.bind("3", lambda e: self.gate_crossed("left"))
-
-#    def mainloop(self):
-#        """Enters the mainloop to update the graphics and run the experiment
-#        """
-#
-#        
-#
-#        return
     
     def next_trial(self):
         """Randomises the next trial and calls the functions to configure it
@@ -302,6 +294,8 @@ class masters_Electronics:
         """
         self.change_obstacle_state = False
         self.running = False
+
+        self.display.destroy()
 
         return
 
@@ -419,10 +413,11 @@ if __name__ == "__main__":
         setup.running = False
         logging.warning("Program exiting before starting")
 
-    setup.display.mainloop()
+    # If the program should start then enter mainloop
+    if setup.running:
+        setup.display.mainloop()
 
     # Methods to ensure the experiment exits without failure
-    #setup.display.destroy()
     setup.data_writer.safe_exit()
     logging.info("Mainloop exited")
 
