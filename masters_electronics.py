@@ -334,6 +334,10 @@ class masters_Electronics:
         if self.change_obstacle_state:
             # When "c" is pressed again will confirm the obstacle has changed
             self.change_obstacle_state = False
+
+            self.exit_gate_crossed = False
+            self.entrance_gate_crossed = False
+            
             self.display.canvas.toggle_obstacle_visibility()
             logging.info(
                 "Changed obstacle to {left}, {right}".format(
