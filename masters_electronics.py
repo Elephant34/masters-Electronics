@@ -265,27 +265,13 @@ class masters_Electronics:
             self.display.bind("2", lambda e: self.gate_crossed("right"))
             self.display.bind("3", lambda e: self.gate_crossed("left"))
 
-    def mainloop(self):
-        """Enters the mainloop to update the graphics and run the experiment
-        """
-
-        # Checks for error conditions before starting mainloop
-        if self.running is None:
-            self.running = True # By default will start running
-        else:
-            # If running has been toggled before the program starts exit immediatly
-            self.running = False
-            logging.warning("Program exiting before starting")
-
-        while self.running:
-            # Keeps the display refreshing
-            self.display.update()
-
-        # Methods to ensure the experiment exits without failure
-        self.display.destroy()
-        setup.data_writer.safe_exit()
-
-        return
+#    def mainloop(self):
+#        """Enters the mainloop to update the graphics and run the experiment
+#        """
+#
+#        
+#
+#        return
     
     def next_trial(self):
         """Randomises the next trial and calls the functions to configure it
@@ -425,7 +411,19 @@ if __name__ == "__main__":
     logging.info("Waiting for obstacle setup to be completed")
     wait(lambda: setup.change_obstacle_state is False, sleep_seconds=0.1, on_poll=lambda:setup.display.update())
 
-    setup.mainloop()
+    # Checks for error conditions before starting mainloop
+    if setup.running is None:
+        setup.running = True # By default will start running
+    else:
+        # If running has been toggled before the program starts exit immediatly
+        setup.running = False
+        logging.warning("Program exiting before starting")
+
+    setup.display.mainloop()
+
+    # Methods to ensure the experiment exits without failure
+    #setup.display.destroy()
+    setup.data_writer.safe_exit()
     logging.info("Mainloop exited")
 
     if "slowexit" in config["DEBUG"].lower():
