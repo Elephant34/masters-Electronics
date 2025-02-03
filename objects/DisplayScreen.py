@@ -13,6 +13,7 @@ class DisplayScreen(tk.Tk):
 
         # Makes the display fullscreen
         self.attributes("-fullscreen", True)
+        self.config(cursor="none")
 
         self.title("masters_electronics")
 
@@ -41,13 +42,29 @@ class ExperimentCanvas(tk.Canvas):
         self.height = height
 
         # Makes the rectangles which will be configured to white or black depending on the trial
-        # Default colours are just for testing
-        self.left_rect = self.create_rectangle(0, 0, self.width/2, self.height)
-        self.right_rect = self.create_rectangle(self.width/2, 0, self.width, self.height)
-        self.set_rect_colours("dark", "light")
+        self.left_experiment_rect = self.create_rectangle(0, 0, self.width/2, self.height)
+        self.right_experiment_rect = self.create_rectangle(self.width/2, 0, self.width, self.height)
+        self.set_experiment_rect_colours("#ff00ff", "#00ffff") # Silly colours to make sure they are overwitten by the experiment
+
         
+        # Makes the rectangles to make obstacle settup easy
+        self.obstalce_rect_size = 200
+        self.left_obstalce_rect = self.create_rectangle(
+            ((self.width/4)-(self.obstalce_rect_size/2)), 
+            ((self.height/2)-(self.obstalce_rect_size/2)),
+            ((self.width/4)+(self.obstalce_rect_size/2)), 
+            ((self.height/2)+(self.obstalce_rect_size/2))
+        )
+        self.right_obstalce_rect = self.create_rectangle(
+            ((self.width * (3/4))-(self.obstalce_rect_size/2)), 
+            ((self.height/2)-(self.obstalce_rect_size/2)),
+            ((self.width * (3/4))+(self.obstalce_rect_size/2)), 
+            ((self.height/2)+(self.obstalce_rect_size/2))
+        )
+        self.set_obstacle_colours("#00ff00", "#ffff00")
+        self.toggle_obstacle_visibility(False)
     
-    def set_rect_colours(self, left_hex:str, right_hex:str):
+    def set_experiment_rect_colours(self, left_hex:str, right_hex:str):
         """Sets the rectangle colours
 
         Args:
@@ -58,8 +75,44 @@ class ExperimentCanvas(tk.Canvas):
         left_hex = self.match_colour(left_hex)
         right_hex = self.match_colour(right_hex)
 
-        self.itemconfig(self.left_rect, fill=left_hex, outline=left_hex)
-        self.itemconfig(self.right_rect, fill=right_hex, outline=right_hex)
+        self.itemconfig(self.left_experiment_rect, fill=left_hex, outline=left_hex)
+        self.itemconfig(self.right_experiment_rect, fill=right_hex, outline=right_hex)
+    
+    def set_obstacle_colours(self, left_hex:str, right_hex:str):
+        """Sets the obstacle rect colours
+
+        Args:
+            left_hex (str): A colour hex value, will also accept some custom colour strings
+            right_hex (str): A colour hex value, will also accept some custom colour strings
+        """
+
+        # Ensures the colours are formated correctly
+        left_hex = self.match_colour(left_hex)
+        right_hex = self.match_colour(right_hex)
+
+        self.itemconfig(self.left_obstalce_rect, fill=left_hex, outline=left_hex)
+        self.itemconfig(self.right_obstalce_rect, fill=right_hex, outline=right_hex)
+    
+    def toggle_obstacle_visibility(self, forced_state:bool=None):
+        """Switches the visibility of the obstacle setup rectangles
+
+        Args:
+            force_state (bool, optional): If the current state of the rect visibilty must be forced use True/False. Defaults to None.
+        """
+
+        # If forced state not set toggle the current state
+        if forced_state is None:
+            self.current_obstacle_visibility = not self.current_obstacle_visibility
+        else:
+            self.current_obstacle_visibility = forced_state
+
+        if self.current_obstacle_visibility:
+            current_obstacle_state = "normal"
+        else:
+            current_obstacle_state = "hidden"
+
+        self.itemconfigure(self.left_obstalce_rect, state=current_obstacle_state)
+        self.itemconfigure(self.right_obstalce_rect, state=current_obstacle_state)
     
     def match_colour(self, colour:str):
         """Will match specific colour names to hex values.
@@ -82,6 +135,7 @@ class ExperimentCanvas(tk.Canvas):
                 colour = colour
         
         return colour
+
 
 # For testing
 if __name__ == "__main__":

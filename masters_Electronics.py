@@ -9,6 +9,8 @@ import random
 from pathlib import Path
 from time import strftime, localtime
 
+from waiting import wait
+
 # Environment variables setup
 # ===========================
 from dotenv import dotenv_values
@@ -68,7 +70,8 @@ class masters_Electronics:
         """
 
         self.config = config
-        self.running = False # Program starts not running
+        self.running = None
+        self.change_obstacle_state = False
 
         if "setseed" in self.config["DEBUG"].lower(): random.seed(0) # Debugging with reproducability
 
@@ -88,7 +91,8 @@ class masters_Electronics:
         # Keybinds setup
         self.setup_keybinds()
 
-        # Gets the experimenter to set the obstacle start position
+        # Gets the experimenter to set the obstacle start position and randomises the starting trial
+        self.current_trial = self.EXPERIMENT_BLANK
         self.change_obstacle()
 
         return
@@ -96,6 +100,14 @@ class masters_Electronics:
     def set_experiment_variables(self):
         """Loads the variables used to control the experiment
         """
+        self.EXPERIMENT_BLANK = {
+            "trial_id": None,
+            "left_bg": None,
+            "right_bg": None,
+            "left_fg": None,
+            "right_fg": None
+        }
+
         # List of the experimental trial setups
         # Foreground and background use different terminology to avoid confusion
         self.EXPERIMENTAL_TRIALS:dict = {
@@ -159,27 +171,38 @@ class masters_Electronics:
             },
         }
 
-        self.trial_state = self.generate_trial_state()
+        # Ensures that all experiment trials have the needed keys
+        for trial in self.EXPERIMENTAL_TRIALS.values():
+            if not trial.keys() == self.EXPERIMENT_BLANK.keys():
+                try:
+                    logging.warning(
+                        "Experiment {trial_id} keys do not match the experiment blank".format(
+                            trial_id = trial["trial_id"]
+                        )
+                    )
+                except (KeyError, AttributeError):
+                    logging.warning(
+                        "Unknown experiment keys do not match the experiment blank. Please check experiment keys and relaunch"
+                    )
+                
+                self.exit_mainloop()
 
+        return
         
     
-    def generate_trial_state(self) -> int:
-        """Generates a random valid trial based on the obstalce state
+    def generate_trial_state(self) -> dict:
+        """Generates a random valid trial based on the obstalce state. The current trial must have an obstacle position set
 
         Returns:
-            int: Returns an integer within the experimental_trials directory
+            dict: Returns an random valid trial state
         """
-        """
-        valid_trials = []
-        for trial_no, trial_setup in self.EXPERIMENTAL_TRIALS.items():
-            if trial_setup["obstacle"].lower() == self.obstacle_state.lower():
-                valid_trials.append(trial_no)
         
+        valid_trials = []
+        for trial_setup in list(self.EXPERIMENTAL_TRIALS.values()):
+            if self.current_obstacle["left_fg"].lower() == trial_setup["left_fg"].lower(): # Checks the left obstacle colour
+                if self.current_obstacle["right_fg"].lower() == trial_setup["right_fg"].lower(): # Checks the right obstacle colour
+                    valid_trials.append(trial_setup)
         return random.choice(valid_trials)
-        """
-
-        # TODO: TEMPORATRY THING
-        return self.EXPERIMENTAL_TRIALS[1]
 
 
     def setup_gpio(self):
@@ -240,7 +263,17 @@ class masters_Electronics:
             self.display.bind("3", lambda e: self.gate_crossed("left"))
 
     def mainloop(self):
-        self.running = True
+        """Enters the mainloop to update the graphics and run the experiment
+        """
+
+        # Checks for error conditions before starting mainloop
+        if self.running is None:
+            self.running = True # By default will start running
+        else:
+            # If running has been toggled before the program starts exit immediatly
+            self.running = False
+            logging.warning("Program exiting before starting")
+
         while self.running:
             # Keeps the display refreshing
             self.display.update()
@@ -259,8 +292,8 @@ class masters_Electronics:
             logging.warning("Attempt to switch trial inturrputed by experiment pause")
             return
         
-        self.trial_state = random.choice(list(self.EXPERIMENTAL_TRIALS.values()))
-        logging.info("Changed trial to: {}".format(self.trial_state))
+        self.current_trial = self.generate_trial_state()
+        logging.info("Changed trial to: {}".format(self.current_trial))
 
         self.set_main_rects()
         return
@@ -268,16 +301,17 @@ class masters_Electronics:
     def set_main_rects(self, left_rect=None, right_rect=None):
         """Sets the colours of the rectangles. By default this will be to the current trial state
         """
-        if not left_rect: left_rect = self.trial_state["left_bg"]
-        if not right_rect: right_rect = self.trial_state["right_bg"]
+        if not left_rect: left_rect = self.current_trial["left_bg"]
+        if not right_rect: right_rect = self.current_trial["right_bg"]
 
-        self.display.canvas.set_rect_colours(left_rect, right_rect)
+        self.display.canvas.set_experiment_rect_colours(left_rect, right_rect)
 
         return
 
     def exit_mainloop(self):
         """Will cause the mainloop to exit safley ensuring all data is saved
         """
+        self.change_obstacle_state = False
         self.running = False
 
         return
@@ -295,6 +329,11 @@ class masters_Electronics:
         else:
             self.paused = not self.paused
         
+        if self.change_obstacle_state:
+            logging.info("Pause change overwritten- please confirm obstacle change with 'c' to unpause")
+            self.paused = True
+            return
+        
 
         if self.paused:
             logging.info("Program paused")
@@ -308,9 +347,40 @@ class masters_Electronics:
     def change_obstacle(self):
         """Generates the next obstacle position and places it on screen for the experimenter to roate the obstical around
         """
+
+        if self.change_obstacle_state:
+            # When "c" is pressed again will confirm the obstacle has changed
+            self.change_obstacle_state = False
+            self.display.canvas.toggle_obstacle_visibility()
+            logging.info(
+                "Changed obstacle to {left}, {right}".format(
+                    left = self.current_trial["left_fg"],
+                    right = self.current_trial["right_fg"]
+                )
+            )
+            # Sets a valid trial state when the program first starts to remove an exception being raised
+            self.current_trial = self.generate_trial_state()
+
+            self.toggle_pause(False)
+            self.next_trial()
+            return
+        
         self.toggle_pause(True)
 
-        logging.info("Obstacle roated to {}")
+        self.change_obstacle_state = True
+
+        # As the obstacle states are evenly distributed between the trials will set obstacle state to that of a random trial
+        random_trial = random.choice(list(self.EXPERIMENTAL_TRIALS.values()))
+
+        self.current_obstacle = {
+            "left_fg":random_trial["left_fg"],
+            "right_fg": random_trial["right_fg"]
+        }
+        self.display.canvas.set_obstacle_colours(
+            self.current_obstacle["left_fg"],
+            self.current_obstacle["right_fg"]
+        )
+        self.display.canvas.toggle_obstacle_visibility()
 
         return
 
@@ -320,15 +390,15 @@ class masters_Electronics:
 
         # Only write data when the program is not paused
         if not self.paused:
-            self.data_writer.record_gate_crossed(gate_id, self.trial_state["trial_id"])
+            self.data_writer.record_gate_crossed(gate_id, self.current_trial["trial_id"])
         else:
             # Adds a warning log if the gates are crossed while the program is paused and data is not written
             logging.warning(
                 "Gate {gate_id} crossed in trial state {trial_id} while paused".format(
                     gate_id = gate_id,
-                    trial_id = self.trial_state["trial_id"]
+                    trial_id = self.current_trial["trial_id"]
                 )
-                )
+            )
 
 
 
@@ -337,7 +407,10 @@ if __name__ == "__main__":
     logging.info("Program started")
     setup = masters_Electronics(config)
 
-    logging.info("Mainloop entered")
+    # Waits until the obstacle state has been set before starting mainloop
+    logging.info("Waiting for obstacle setup to be completed")
+    wait(lambda: setup.change_obstacle_state is False, sleep_seconds=0.1, on_poll=lambda:setup.display.update())
+
     setup.mainloop()
     logging.info("Mainloop exited")
 
