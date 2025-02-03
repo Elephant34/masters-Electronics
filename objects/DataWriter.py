@@ -23,7 +23,7 @@ class DataWriter:
             "trial_id": None
         }
 
-        # Creates one data file per day, this may need adjusting depending on the RAM space of the pi and how much data is written
+        # Creates one data file per day
         self.data_file = data_path / "{file_name}.csv".format(
             file_name = strftime("%Y%m%d", localtime())
         )
@@ -60,9 +60,10 @@ class DataWriter:
         data["epoch_time"] = current_epoch()
         data["trial_id"] = trial_id
 
+        # CSV object add a row
         self.data_writer.writerow(data)
 
-        self.open_file.flush()
+        self.open_file.flush() # Helps ensure the data is written before the file is closed
 
         logging.info("Gate crossed: {}".format(data))
     

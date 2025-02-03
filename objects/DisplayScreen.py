@@ -1,9 +1,10 @@
+import tkinter as tk
 import logging
 logger = logging.getLogger(__name__)
-import tkinter as tk
+
 
 class DisplayScreen(tk.Tk):
-    """The root screen object controling the background cue
+    """The root screen object controling the background cue and obstacle setup screen
     """
     def __init__(self, *args, **kwargs):
         """Setup for the root screen object
@@ -13,8 +14,9 @@ class DisplayScreen(tk.Tk):
 
         # Makes the display fullscreen
         self.attributes("-fullscreen", True)
+        # Makes the cursor invisible
         self.config(cursor="none")
-
+        # Names the screen
         self.title("masters_electronics")
 
         # Gets the width and height
@@ -47,7 +49,7 @@ class ExperimentCanvas(tk.Canvas):
         self.set_experiment_rect_colours("#ff00ff", "#00ffff") # Silly colours to make sure they are overwitten by the experiment
 
         
-        # Makes the rectangles to make obstacle settup easy
+        # Makes the rectangles in the middle of each half to make obstacle settup easy
         self.obstalce_rect_size = 200
         self.left_obstalce_rect = self.create_rectangle(
             ((self.width/4)-(self.obstalce_rect_size/2)), 
@@ -61,7 +63,7 @@ class ExperimentCanvas(tk.Canvas):
             ((self.width * (3/4))+(self.obstalce_rect_size/2)), 
             ((self.height/2)+(self.obstalce_rect_size/2))
         )
-        self.set_obstacle_colours("#00ff00", "#ffff00")
+        self.set_obstacle_colours("#00ff00", "#ffff00") # Silly colours to make it clear if it goes wrong
         self.toggle_obstacle_visibility(False)
     
     def set_experiment_rect_colours(self, left_hex:str, right_hex:str):
@@ -106,6 +108,7 @@ class ExperimentCanvas(tk.Canvas):
         else:
             self.current_obstacle_visibility = forced_state
 
+        # Converts the true and false to string values for the item configurations
         if self.current_obstacle_visibility:
             current_obstacle_state = "normal"
         else:
