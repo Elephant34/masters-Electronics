@@ -261,7 +261,7 @@ class masters_Electronics:
             self.display.bind("<Tab>", lambda e: self.next_trial())
 
             # Binds 1,2,3 keys to mimic gate interaction
-            self.display.bind("1", lambda e: self.gate_crossed("enterance"))
+            self.display.bind("1", lambda e: self.gate_crossed("entrance"))
             self.display.bind("2", lambda e: self.gate_crossed("right"))
             self.display.bind("3", lambda e: self.gate_crossed("left"))
 
@@ -393,7 +393,7 @@ class masters_Electronics:
 
         # Only write data when the program is not paused
         if not self.paused:
-            if gate_id.lower() == "enterance":
+            if gate_id.lower() == "entrance":
                 self.entrance_gate_crossed = True
             if gate_id.lower() in ["right", "left"]:
                 self.exit_gate_crossed = True
