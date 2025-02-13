@@ -245,6 +245,8 @@ class masters_Electronics:
                 # Exits the program immedietly if the experimental trials is not formatted correctly
                 self.exit_mainloop()
                 return
+        
+        logging.info("Experiment Trials List: {}".format(self.EXPERIMENTAL_TRIALS))
 
         return
         
