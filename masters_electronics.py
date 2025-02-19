@@ -87,28 +87,36 @@ class masters_Electronics:
         # Experiment constants
         # ====================
         self.set_experiment_constants()
+        logging.info("Set experiment constants")
 
         # Screen setup
         # ============
         self.display = DisplayScreen()
+        logging.info("Set display screen")
 
         # Data writer setup
         # =================
         self.data_writer = DataWriter(Path(self.config["data_path"]))
+        logging.info("Set data writer")
 
         # GPIO setup
         # ==========
         self.setup_gpio()
         self.setup_gpio_callbacks()
+        logging.info("Set GPIO pins")
 
         # Keybinds setup
         # ==============
         self.setup_keybinds()
+        logging.info("Set keepbinds")
 
         # Obstacle setup
         # ==============
         self.current_trial = self.EXPERIMENT_BLANK
         self.change_obstacle()
+        logging.info("Set up of obstacle positioning")
+
+        logging.info("Setup complete")
 
         return
 
