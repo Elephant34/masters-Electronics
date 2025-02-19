@@ -108,7 +108,7 @@ class masters_Electronics:
         # Keybinds setup
         # ==============
         self.setup_keybinds()
-        logging.info("Set keepbinds")
+        logging.info("Set keybinds")
 
         # Obstacle setup
         # ==============
