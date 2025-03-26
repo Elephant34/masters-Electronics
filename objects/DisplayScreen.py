@@ -65,6 +65,19 @@ class ExperimentCanvas(tk.Canvas):
         )
         self.set_obstacle_colours("#00ff00", "#ffff00") # Silly colours to make it clear if it goes wrong
         self.toggle_obstacle_visibility(False)
+
+        # Pixel to keep the TV from displaying a screensaver
+        self.jiggle_state = True # Bool to keep the pixel in one of two places
+        self.jiggle_timer_ms = 600000 # Pixel will move every 10mins
+        self.jiggle_rect = self.create_rectangle(
+            0,
+            0,
+            0,
+            0,
+            fill="orange",
+            outline="orange"
+        )
+        self.jiggle()
     
     def set_experiment_rect_colours(self, left_hex:str, right_hex:str):
         """Sets the rectangle colours
@@ -138,6 +151,15 @@ class ExperimentCanvas(tk.Canvas):
                 colour = colour
         
         return colour
+    
+    def jiggle(self) -> None:
+        """Moves the jiggle pixel back and forward to stop the TV from going to sleep
+        """
+
+        self.moveto(self.jiggle_rect, self.jiggle_state, self.jiggle_state)
+        self.jiggle_state = not self.jiggle_state
+
+        self.after(self.jiggle_timer_ms, self.jiggle) # Move pixel after 10mins
 
 
 # For testing
