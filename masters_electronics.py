@@ -14,8 +14,28 @@ from waiting import wait, ANY
 # Environment variables setup
 # ===========================
 from dotenv import dotenv_values
-config = dotenv_values(".env")
-assert len(config) >= 5, ".env file does not have correct arguments" # Quick check that a .env file has been added
+
+# Defaults of optional environment variables
+default_config = {
+    "DEBUG": "",
+    "data_path": "data",
+    "log_path": "logs"
+}
+
+# Merges the defaults with the file
+config = {
+    **default_config,
+    **dotenv_values(".env")
+}
+
+# Checks mandatory config values are set
+try:
+    config["left_gate_pin"]
+    config["right_gate_pin"]
+    config["entrance_gate_pin"]
+    config["crossing_timeout"]
+except KeyError as missing_key:
+    assert False, "MANDATORY CONFIG VALUE {} NOT SET, EXITING".format(missing_key)
 
 # Logging setup
 # =============
