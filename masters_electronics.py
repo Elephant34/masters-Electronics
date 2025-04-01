@@ -457,18 +457,29 @@ class masters_Electronics:
 
             # Record if a gate set has been crossed
             if gate_id.lower() == "entrance":
+
+                # Resets the timer if another gate crossing occurs
                 try:
                     self.display.after_cancel(self.entrance_reset)
                 except AttributeError:
                     pass
+
                 self.entrance_gate_crossed = True
+
+                # Will stop the display from changing if there is a greater than X ms gap between gate events
                 self.entrance_reset = self.display.after(int(self.config["crossing_timeout"]), self.reset_gate_crossing, gate_id.lower())
+            
             if gate_id.lower() in ["right", "left"]:
+
+                # Resets the timer if another gate crossing occurs
                 try:
                     self.display.after_cancel(self.exit_reset)
                 except AttributeError:
                     pass
+
                 self.exit_gate_crossed = True
+
+                # Will stop the display from changing if thre is a greater than X ms gap between gate events
                 self.exit_reset = self.display.after(int(self.config["crossing_timeout"]), self.reset_gate_crossing, gate_id.lower())
             
 
@@ -492,26 +503,26 @@ class masters_Electronics:
     def reset_gate_crossing(self, gate_id):
         """Resets the gate crossed variables to faulse
         """
-        
+        logging.info("Gate {} reset".format(gate_id))
 
         if gate_id.lower() == "entrance":
+            # Remove the reset timer
             try:
                 self.display.after_cancel(self.entrance_reset)
-                logging.info("Gate {} timeout".format(gate_id))
             except AttributeError:
                 pass
         
             self.entrance_gate_crossed = False
         elif gate_id.lower() in ["right", "left"]:
+            # Remove the reset timer
             try:
                 self.display.after_cancel(self.exit_reset)
-                logging.info("Gate {} timeout".format(gate_id))
             except AttributeError:
                 pass
 
             self.exit_gate_crossed = False
         elif gate_id.lower() == "all":
-            logging.info("Gate {} timeout".format(gate_id))
+            # Remove both reset timers
             try:
                 self.display.after_cancel(self.entrance_reset)
             except AttributeError:
