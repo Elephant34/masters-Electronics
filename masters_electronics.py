@@ -280,7 +280,7 @@ class masters_Electronics:
 
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(
-            [config["right_gate_pin"], config["left_gate_pin"], config["entrance_gate_pin"]],
+            [self.config["right_gate_pin"], self.config["left_gate_pin"], self.config["entrance_gate_pin"]],
             GPIO.IN,
             pull_up_down=GPIO.PUD_UP
         )
@@ -290,19 +290,19 @@ class masters_Electronics:
         """
 
         GPIO.add_event_detect(
-            int(config["entrance_gate_pin"]),
+            int(self.config["entrance_gate_pin"]),
             GPIO.FALLING,
             callback=lambda x: self.gate_crossed("entrance"),
             bouncetime=10
         )
         GPIO.add_event_detect(
-            int(config["left_gate_pin"]),
+            int(self.config["left_gate_pin"]),
             GPIO.FALLING,
             callback=lambda x: self.gate_crossed("left"),
             bouncetime=10
         )
         GPIO.add_event_detect(
-            int(config["right_gate_pin"]),
+            int(self.config["right_gate_pin"]),
             GPIO.FALLING,
             callback=lambda x: self.gate_crossed("right"),
             bouncetime=10
@@ -389,7 +389,7 @@ class masters_Electronics:
 
         if self.paused:
             # Resets the gate crossing states- a bird might be half way through the setup when paused
-            self.reset_gate_crossings()
+            self.reset_gate_crossing("all")
 
             logging.info("Program paused")
             self.set_main_rects("orchid2", "cyan2") # Sets bright pause colours
@@ -408,7 +408,7 @@ class masters_Electronics:
             self.change_obstacle_state = False
 
             # Resets the gate crossing states- a bird might have been halfway through when paused
-            self.reset_gate_crossings()
+            self.reset_gate_crossing("all")
 
             # Hides the obstacle setting rectangles
             self.display.canvas.toggle_obstacle_visibility()
@@ -454,17 +454,30 @@ class masters_Electronics:
 
         # Only write data when the program is not paused
         if not self.paused:
+
+            # Record if a gate set has been crossed
             if gate_id.lower() == "entrance":
+                try:
+                    self.display.after_cancel(self.entrance_reset)
+                except AttributeError:
+                    pass
                 self.entrance_gate_crossed = True
+                self.entrance_reset = self.display.after(int(self.config["crossing_timeout"]), self.reset_gate_crossing, gate_id.lower())
             if gate_id.lower() in ["right", "left"]:
+                try:
+                    self.display.after_cancel(self.exit_reset)
+                except AttributeError:
+                    pass
                 self.exit_gate_crossed = True
+                self.exit_reset = self.display.after(int(self.config["crossing_timeout"]), self.reset_gate_crossing, gate_id.lower())
+            
 
             # Records the data to the CSV file
             self.data_writer.record_gate_crossed(gate_id, self.current_trial["trial_id"])
 
             # Automatic trial rotation
             if self.entrance_gate_crossed and self.exit_gate_crossed:
-                self.reset_gate_crossings()
+                self.reset_gate_crossing("all")
 
                 self.next_trial()
         else:
@@ -476,11 +489,44 @@ class masters_Electronics:
                 )
             )
     
-    def reset_gate_crossings(self):
+    def reset_gate_crossing(self, gate_id):
         """Resets the gate crossed variables to faulse
         """
-        self.entrance_gate_crossed = False
-        self.exit_gate_crossed = False
+        
+
+        if gate_id.lower() == "entrance":
+            try:
+                self.display.after_cancel(self.entrance_reset)
+                logging.info("Gate {} timeout".format(gate_id))
+            except AttributeError:
+                pass
+        
+            self.entrance_gate_crossed = False
+        elif gate_id.lower() in ["right", "left"]:
+            try:
+                self.display.after_cancel(self.exit_reset)
+                logging.info("Gate {} timeout".format(gate_id))
+            except AttributeError:
+                pass
+
+            self.exit_gate_crossed = False
+        elif gate_id.lower() == "all":
+            logging.info("Gate {} timeout".format(gate_id))
+            try:
+                self.display.after_cancel(self.entrance_reset)
+            except AttributeError:
+                pass
+            try:
+                self.display.after_cancel(self.exit_reset)
+            except AttributeError:
+                pass
+        
+            self.entrance_gate_crossed = False
+            self.exit_gate_crossed = False
+        else:
+            logging.warning(
+                "Attempted to reset unknown gate \"{}\". Please check gate_id or code!".format(gate_id)
+            )
 
         return
 
