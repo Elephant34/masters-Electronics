@@ -68,12 +68,12 @@ class ExperimentCanvas(tk.Canvas):
 
         # Pixel to keep the TV from displaying a screensaver
         self.jiggle_state = True # Bool to keep the pixel in one of two places
-        self.jiggle_timer_ms = 600000 # Pixel will move every 10mins
+        self.jiggle_timer_ms = 600 # Pixel will move every 10mins
         self.jiggle_rect = self.create_rectangle(
             0,
             0,
-            0,
-            0,
+            2,
+            2,
             fill="orange",
             outline="orange"
         )
