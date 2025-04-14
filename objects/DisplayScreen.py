@@ -68,12 +68,12 @@ class ExperimentCanvas(tk.Canvas):
 
         # Pixel to keep the TV from displaying a screensaver
         self.jiggle_state = True
-        self.jiggle_timer_ms = 600
+        self.jiggle_timer_ms = 1000
         self.jiggle_rect = self.create_rectangle(
-            0,
-            0,
-            3,
-            3,
+            5,
+            5,
+            15,
+            15,
             fill="orange",
             outline="orange"
         )
@@ -158,9 +158,9 @@ class ExperimentCanvas(tk.Canvas):
         x_shift = 0 # Ensures a value exists
 
         if self.jiggle_state:
-            x_shift = 2
+            x_shift = 50
         else:
-            x_shift = -2
+            x_shift = -50
 
         self.move(self.jiggle_rect, x_shift, 0)
 
