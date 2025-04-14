@@ -67,13 +67,13 @@ class ExperimentCanvas(tk.Canvas):
         self.toggle_obstacle_visibility(False)
 
         # Pixel to keep the TV from displaying a screensaver
-        self.jiggle_state = True # Bool to keep the pixel in one of two places
-        self.jiggle_timer_ms = 600 # Pixel will move every 10mins
+        self.jiggle_state = True
+        self.jiggle_timer_ms = 600
         self.jiggle_rect = self.create_rectangle(
             0,
             0,
-            2,
-            2,
+            3,
+            3,
             fill="orange",
             outline="orange"
         )
@@ -155,11 +155,21 @@ class ExperimentCanvas(tk.Canvas):
     def jiggle(self) -> None:
         """Moves the jiggle pixel back and forward to stop the TV from going to sleep
         """
+        x_shift = 0 # Ensures a value exists
 
-        self.moveto(self.jiggle_rect, self.jiggle_state, self.jiggle_state)
-        self.jiggle_state = not self.jiggle_state
+        if self.jiggle_state:
+            x_shift = 2
+        else:
+            x_shift = -2
 
-        self.after(self.jiggle_timer_ms, self.jiggle) # Move pixel after 10mins
+        self.move(self.jiggle_rect, x_shift, 0)
+
+        if self.coords(self.jiggle_rect)[0] >= self.width:
+            self.jiggle_state = False # Move pixel backwards
+        elif self.coords(self.jiggle_rect)[0] <= 0:
+            self.jiggle_state = True # Moves pixel forwards
+
+        self.after(self.jiggle_timer_ms, self.jiggle) # Move pixel again after delay
 
 
 # For testing
