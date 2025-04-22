@@ -19,7 +19,8 @@ from dotenv import dotenv_values
 default_config = {
     "DEBUG": "",
     "data_path": "data",
-    "log_path": "logs"
+    "log_path": "logs",
+    "manual_collection": "false"
 }
 
 # Merges the defaults with the file
@@ -27,6 +28,7 @@ config = {
     **default_config,
     **dotenv_values(".env")
 }
+
 
 # Checks mandatory config values are set
 try:
@@ -36,6 +38,7 @@ try:
     config["crossing_timeout"]
 except KeyError as missing_key:
     assert False, "MANDATORY CONFIG VALUE {} NOT SET, EXITING".format(missing_key)
+
 
 # Logging setup
 # =============
@@ -121,9 +124,18 @@ class masters_Electronics:
 
         # GPIO setup
         # ==========
-        self.setup_gpio()
-        self.setup_gpio_callbacks()
-        logging.info("Set GPIO pins")
+        # Only set up GPIO when not in manual mode
+        if "false" in self.config["manual_collection"]:
+            self.setup_gpio()
+            self.setup_gpio_callbacks()
+            logging.info("Set GPIO pins")
+        elif "mirror" in self.config["manual_collection"] or "facing" in self.config["manual_collection"]:
+            logging.warning("Manual Collection mode enabled- GPIO pins disabled")
+        else:
+            logging.warning(
+                "INVALID ENV OPTION- manual_collection=\"{}\" is not recognised".format(self.config["manual_collection"])
+            )
+            self.exit_mainloop()
 
         # Keybinds setup
         # ==============
@@ -341,6 +353,14 @@ class masters_Electronics:
         # Binds "c" to change the obstacle rotation (pressing c again will confirm the change)
         self.display.bind("c", lambda e: self.change_obstacle())
 
+        # Manual data collection keybinds
+        if "mirror" in self.config["manual_collection"].lower():
+            self.display.bind("7", lambda e: self.manual_trigger("right"))
+            self.display.bind("9", lambda e: self.manual_trigger("left"))
+        elif "facing" in self.config["manual_collection"].lower():
+            self.display.bind("7", lambda e: self.manual_trigger("left"))
+            self.display.bind("9", lambda e: self.manual_trigger("right"))
+
         # Specific debug related keybinds
         if self.config["DEBUG"]:
             # Binds <tab> to rotate experimental setups
@@ -364,6 +384,18 @@ class masters_Electronics:
 
         self.set_main_rects()
         return
+
+    def manual_trigger(self, direction:str):
+        """Allows for manual data collection- triggers the entrance half a section before and the inputed gate immediatly
+
+        Args:
+            direction (str): direction of bird exit. Controlled through the "manual_collection" env flag
+        """
+
+        logging.info("MANUAL GATE CROSSING")
+
+        self.gate_crossed("entrance", -0.5)
+        self.gate_crossed(direction)
 
     def set_main_rects(self, left_rect=None, right_rect=None):
         """Sets the colours of the rectangles. By default this will be to the current trial state
@@ -468,8 +500,12 @@ class masters_Electronics:
 
         return
 
-    def gate_crossed(self, gate_id):
+    def gate_crossed(self, gate_id:str, time_offset:float=0):
         """Callback for when the entry gate is crossed to write data and change experimental trial if necessary
+
+        Args:
+            gate_id (str): The individual ID of the gate interacted with
+            time_offset (float, optional): Offset to the current time when the input should be recored. Defaults to 0.
         """
 
         # Only write data when the program is not paused
@@ -504,7 +540,7 @@ class masters_Electronics:
             
 
             # Records the data to the CSV file
-            self.data_writer.record_gate_crossed(gate_id, self.current_trial["trial_id"])
+            self.data_writer.record_gate_crossed(gate_id, self.current_trial["trial_id"], time_offset)
 
             # Automatic trial rotation
             if self.entrance_gate_crossed and self.exit_gate_crossed:

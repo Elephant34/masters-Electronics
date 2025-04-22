@@ -47,17 +47,18 @@ class DataWriter:
 
         logging.info("Data writer open at file: {}".format(str(self.data_file.absolute())))
 
-    def record_gate_crossed(self, gate_id:int, trial_id:int):
+    def record_gate_crossed(self, gate_id:str, trial_id:int, time_offset:float=0):
         """Write to csv file the gate_id and the time crossed
 
         Args:
-            gate_id (int): The individual ID of the gate interacted with
+            gate_id (str): The individual ID of the gate interacted with
             trial_id (int): The id number of the current trial setup
+            time_offset (float, optional): Offset to the current time when the input should be recored. Defaults to 0.
         """
 
         data = self.data_blank
         data["gate_id"] = gate_id
-        data["epoch_time"] = current_epoch()
+        data["epoch_time"] = current_epoch() + time_offset
         data["trial_id"] = trial_id
 
         # CSV object add a row
